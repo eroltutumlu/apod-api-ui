@@ -44,7 +44,6 @@ export default {
   },
   methods: {
     callApi(selectedDate) {
-      console.log(selectedDate);
       const url = 'https://apod-api-app.herokuapp.com/apod?date=' + selectedDate
       fetch(url, {method: 'get'})
       .then((data) => data.json())
