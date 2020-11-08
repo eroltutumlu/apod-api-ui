@@ -19,6 +19,56 @@
           </b-card-text>
         </b-card>
       </div>
+
+      <div>
+        <b-button id="show-btn" @click="$bvModal.show('subscribeModal')">Subscribe</b-button>
+
+        <b-modal id="subscribeModal" hide-footer>
+          <template #modal-title>
+            Get daily email from NASA
+          </template>
+        <div>
+          <b-form @submit="subscribe">
+
+            <b-form-group
+              id="inputGroup1"
+              label="Email address:"
+              label-for="subEmailAddress"
+              description="We'll never share your email with anyone else."
+            >
+              <b-form-input
+                id="subEmailAddress"
+                v-model="subscribeForm.email"
+                type="email"
+                required
+                placeholder="Enter email"
+              ></b-form-input>
+            </b-form-group>
+
+            <b-form-group id="inputGroup2" label="Your name:" label-for="subName">
+              <b-form-input
+                id="subName"
+                v-model="subscribeForm.name"
+                required
+                placeholder="Enter fullname"
+              ></b-form-input>
+            </b-form-group>
+
+            <b-form-group id="inputGroup3" label="Your surname:" label-for="subSurname">
+              <b-form-input
+                id="subSurname"
+                v-model="subscribeForm.surname"
+                required
+                placeholder="Enter surname"
+              ></b-form-input>
+            </b-form-group>
+
+            <b-button type="submit" variant="primary">Subscribe</b-button>
+          </b-form>
+        </div>
+        </b-modal>
+      </div>
+
     </b-container>
   </div>
 </template>
@@ -34,7 +84,13 @@ export default {
     return {
       value: new Date(),
       selected: '',
-      apod: Object
+      apod: Object,
+      subscribeForm: {
+        email: '',
+        name: '',
+        surname: ''
+      },
+      subscriberModalShow: true
     }
   },
   watch: {
@@ -44,17 +100,30 @@ export default {
   },
   methods: {
     callApi(selectedDate) {
-      const url = 'https://apod-api-app.herokuapp.com/apod?date=' + selectedDate
+      const url = 'http://localhost:8096/apod?date=' + selectedDate
       fetch(url, {method: 'get'})
       .then((data) => data.json())
       .then((jsonData) => {
         this.apod = jsonData
       })
-
     },
     formatDate(date){
       return moment(date).format('YYYY-MM-DD')
-    }
+    },
+    subscribe(e) {
+      e.preventDefault();
+      
+      fetch('http://localhost:8096/api/subscribe', {
+        method: 'post',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(this.subscribeForm)
+      }).then(res=>res.json())
+        .then(res => console.log(res));
+
+    },
   },
   mounted: function() {
     let selectedDate = this.value
