@@ -24,7 +24,7 @@
         <b-button id="btnSubscribe" @click="$bvModal.show('subscribeModal')">Subscribe</b-button>
         <b-button id="btnUnSubscribe" @click="$bvModal.show('unSubscribeModal')">Unsubscribe</b-button>
 
-        <b-modal id="subscribeModal" hide-footer>
+        <b-modal ref="subscribeModal" id="subscribeModal" hide-footer>
           <template #modal-title>
             Get daily email from NASA
           </template>
@@ -69,7 +69,7 @@
         </div>
         </b-modal>
 
-        <b-modal id="unSubscribeModal" hide-footer>
+        <b-modal ref="unSubscribeModal" id="unSubscribeModal" hide-footer>
           <template #modal-title>
             Unsubscribe
           </template>
@@ -130,7 +130,7 @@ export default {
   },
   methods: {
     callApi(selectedDate) {
-      const url = 'http://localhost:8096/apod?date=' + selectedDate
+      const url = 'https://apod-api-app.herokuapp.com/apod?date=' + selectedDate
       fetch(url, {method: 'get'})
       .then((data) => data.json())
       .then((jsonData) => {
@@ -140,10 +140,13 @@ export default {
     formatDate(date){
       return moment(date).format('YYYY-MM-DD')
     },
+    hideModal(modal) {
+        this.$refs[modal].hide()
+    },
     subscribe(e) {
       e.preventDefault();
       
-      fetch('http://localhost:8096/api/subscribe', {
+      fetch('https://apod-api-app.herokuapp.com/api/subscribe', {
         method: 'post',
         headers: {
           'Accept': 'application/json, text/plain, */*',
@@ -151,23 +154,48 @@ export default {
         },
         body: JSON.stringify(this.subscribeForm)
       }).then(res=>res.json())
-        .then(res => console.log(res));
+        .then(res => {
+          if(res.response === true) {
+            this.makeToast(false, `You've just subscribed!. You'll get your first space image now. Please check out your email. Then you'll recieve an email every morning.`, `Subscribed!`);
+          }else {
+            this.makeToast(false, `Something went wrong. We will monitor our application. Try again later.`, `Went wrong!`);
+          }
+          this.hideModal('subscribeModal');
+        });
 
     },
     unsubscribe(e) {
       e.preventDefault();
-
-      const unsubscribeUrl = 'http://localhost:8096/api/unsubscribe/' +  this.unsubscribeForm.email;
       
-      fetch(unsubscribeUrl, {
-        method: 'put',
+      const putMethod = {
+        method: 'PUT',
         headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      }).then(res=>res.json())
-        .then(res => console.log(res));
+          'Content-type': 'application/json; charset=UTF-8'
+        },
+        body: JSON.stringify(this.unsubscribeForm)
+      }
 
+      fetch('https://apod-api-app.herokuapp.com/api/unsubscribe', putMethod)
+        .then(res=>res.json())
+        .then(res => {
+          console.log(res);
+          if(res.response === true) {
+            this.makeToast(false, `If you'are a subscriber your account removed. You won't get an email anymore.`, `Unsubscribed!`);
+          } else {
+            this.makeToast(false, `Something went wrong. We will monitor our application. Try again later.`, `Went wrong!`);
+          }
+
+          this.hideModal('unSubscribeModal');
+
+        });
+
+    },
+    makeToast(append = false, message, title) {
+      this.$bvToast.toast(message, {
+        title: title,
+        autoHideDelay: 5000,
+        appendToast: append
+      })
     },
   },
   mounted: function() {
